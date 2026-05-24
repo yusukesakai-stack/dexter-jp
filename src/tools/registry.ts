@@ -1,5 +1,8 @@
 import { StructuredToolInterface } from '@langchain/core/tools';
 import { createGetFinancials, createReadFilings, createScreenCompanies, getStockPrice, isJQuantsAvailable, STOCK_PRICE_DESCRIPTION } from './finance/index.js';
+import { historyTool, HISTORY_DESCRIPTION } from './finance/history.js';
+import { rankingTool, RANKING_DESCRIPTION } from './finance/ranking.js';
+import { calendarTool, CALENDAR_DESCRIPTION } from './finance/calendar.js';
 import { exaSearch, perplexitySearch, tavilySearch, WEB_SEARCH_DESCRIPTION, xSearchTool, X_SEARCH_DESCRIPTION } from './search/index.js';
 import { skillTool, SKILL_TOOL_DESCRIPTION } from './skill.js';
 import { webFetchTool, WEB_FETCH_DESCRIPTION } from './fetch/web-fetch.js';
@@ -61,6 +64,27 @@ export function getToolRegistry(model: string): RegisteredTool[] {
       tool: createScreenCompanies(model),
       description: SCREEN_COMPANIES_DESCRIPTION,
       compactDescription: 'Screen Japanese listed companies by financial criteria (PER, ROE, growth, margins, etc.).',
+      concurrencySafe: true,
+    },
+    {
+      name: 'get_company_history',
+      tool: historyTool,
+      description: HISTORY_DESCRIPTION,
+      compactDescription: 'Corporate history timeline (founding, M&A, listing, name changes). 246,000+ events across all companies.',
+      concurrencySafe: true,
+    },
+    {
+      name: 'get_ranking',
+      tool: rankingTool,
+      description: RANKING_DESCRIPTION,
+      compactDescription: 'Financial metric ranking (ROE, margins, growth, yield). Top companies by any of 18 metrics.',
+      concurrencySafe: true,
+    },
+    {
+      name: 'get_earnings_calendar',
+      tool: calendarTool,
+      description: CALENDAR_DESCRIPTION,
+      compactDescription: 'JPX earnings announcement schedule. Upcoming disclosure dates by company, market, and date range.',
       concurrencySafe: true,
     },
     {

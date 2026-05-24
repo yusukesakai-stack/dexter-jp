@@ -8,3 +8,6 @@ export { createGetFinancials } from './get-financials.js';
 export { createReadFilings } from './read-filings.js';
 export { createScreenCompanies } from './screen-companies.js';
 export { resolveEdinetCode } from './resolver.js';
+export { historyTool, HISTORY_DESCRIPTION } from './history.js';
+export { rankingTool, RANKING_DESCRIPTION } from './ranking.js';
+export { calendarTool, CALENDAR_DESCRIPTION } from './calendar.js';
