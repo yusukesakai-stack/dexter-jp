@@ -198,3 +198,72 @@
 2. yuho-generator との連携設計
 3. 金融ツールのユニットテスト設計 (モック戦略の検討)
 4. Web検索APIキー (TAVILY_API_KEY) の取得・設定 (任意)
+
+---
+
+## 2026-05-24 Session 5a: EDINET DB MCP 統合 予備調査
+
+### 目的
+
+EDINET DB MCP の統合前段階として、既存ツールと MCP ツールの関係性を明確化する。
+
+### Step 1: 既存ツールの外部 API 使用状況
+
+ソースコードを全件精読し、以下を確認:
+
+| 既存ツール | 叩いている API | エンドポイント |
+|---|---|---|
+| get_financials (メタツール) | EDINET DB REST API | `/v1/companies/{code}`, `/v1/companies/{code}/financials`, `/v1/companies/{code}/analysis`, `/v1/companies/{code}/earnings` |
+| read_filings (メタツール) | EDINET DB REST API | `/v1/companies/{code}/text-blocks`, `/v1/companies/{code}/shareholders` |
+| company_screener | EDINET DB REST API | `/v1/screener` |
+| get_stock_price | J-Quants V2 API | `/v2/equities/bars/daily` |
+| (resolver, 内部) | EDINET DB REST API | `/v1/search` |
+| 残り13ツール | 外部金融APIなし | ローカル or 各種Web API |
+
+**結論: 金融ツール4本すべて EDINET DB REST API (`edinetdb.jp/v1`) を直接叩いている (get_stock_price のみ J-Quants)**
+
+### Step 2: EDINET DB MCP ツール一覧
+
+公式 MCP ガイド (edinetdb.jp/docs/mcp-guide) から取得。
+
+- **MCP ツール数: 15本** (当初想定の 48 とは異なる)
+- REST API は 60+ エンドポイントあるが、MCP はそのサブセット
+- MCP tools/list の直接取得は 403 (認証方式の制約) → 公式ドキュメントで代替
+
+### Step 3: マッピング結果 (docs/tool_mapping.md)
+
+| カテゴリ | 件数 |
+|---|---|
+| A. 完全重複 (同じ API エンドポイント) | 6 組 |
+| B. 部分重複 | 3 組 |
+| C. MCP のみ (既存にない) | 9 本 |
+| D. 既存のみ (MCP にない) | 13 本 |
+| E. REST API のみ (MCP にもない) | 25+ |
+
+### Step 4: 統合戦略 (docs/session5_strategy.md)
+
+3案を比較検討:
+
+| 案 | 内容 | 工数 | 推奨 |
+|---|---|---|---|
+| α 最小統合 | 沿革ツール1本のみ REST API で追加 | 0.5h | — |
+| **β 補完統合** | **既存にない機能を REST API で段階追加 (7-10本)** | **3-6h** | **★ 推奨** |
+| γ 全面置換 | MCP クライアントとして接続、既存を書き換え | 15-20h | — |
+
+**推奨: 案β** — MCP 接続はせず、REST API を直接叩くツールを追加。理由:
+1. 既存のメタツール (二重LLM構造) は Dexter の差別化要因。壊さない
+2. 既存インフラ (api.ts, resolver.ts) がそのまま再利用できる
+3. REST API は MCP より機能が豊富 (60+ vs 15)
+4. 段階的に追加可能でリスクが小さい
+
+### 成果物
+
+- `docs/tool_mapping.md` — 既存17ツール ↔ MCP15ツール 対応関係マッピング
+- `docs/session5_strategy.md` — 統合戦略 3案比較 + 推奨案
+
+### 次セッション (Session 5b) への推奨
+
+案β Phase 1 の実装:
+1. `get_company_history` — 沿革 (当初の動機)
+2. `get_ranking` — 指標別ランキング
+3. `get_earnings_calendar` — 決算発表スケジュール
